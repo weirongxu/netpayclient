@@ -4,6 +4,7 @@ module Netpayclient
   require 'digest/sha1'
   require 'mcrypt'
   require 'iniparse'
+  require 'openssl'
 
   DES_KEY = 'SCUBEPGW'
   HASH_PAD = '0001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff003021300906052b0e03021a05000414'
@@ -45,7 +46,6 @@ module Netpayclient
 
   def self.mybcpowmod(num, pow, mod)
     num.to_bn.mod_exp(pow, mod)
-    # num ** pow % mod
   end
 
   def self.rsa_encrypt(private_key,input)
@@ -112,19 +112,19 @@ module Netpayclient
     crypto.padding = false
 
     prime1 = bin[384,64]
-    enc = crypto.encrypt(prime1)
+    enc = crypto.decrypt(prime1)
     @@private_key[:prime1] = enc
     prime2 = bin[448,64]
-    enc = crypto.encrypt(prime2)
+    enc = crypto.decrypt(prime2)
     @@private_key[:prime2] = enc
     prime_exponent1 = bin[512,64]
-    enc = crypto.encrypt(prime_exponent1)
+    enc = crypto.decrypt(prime_exponent1)
     @@private_key[:prime_exponent1] = enc
     prime_exponent2 = bin[576,64]
-    enc = crypto.encrypt(prime_exponent2)
+    enc = crypto.decrypt(prime_exponent2)
     @@private_key[:prime_exponent2] = enc
     coefficient = bin[640,64]
-    enc = crypto.encrypt(coefficient)
+    enc = crypto.decrypt(coefficient)
     @@private_key[:coefficient] = enc
     return ret
   end
