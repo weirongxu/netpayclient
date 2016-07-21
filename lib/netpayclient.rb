@@ -44,7 +44,8 @@ module Netpayclient
   end
 
   def self.mybcpowmod(num, pow, mod)
-    num ** pow % mod
+    num.to_bn.mod_exp(pow, mod)
+    # num ** pow % mod
   end
 
   def self.rsa_encrypt(private_key,input)
@@ -103,13 +104,14 @@ module Netpayclient
     end
     bin = self.hex2bin(hex)
     @@private_key[:modulus] = bin[0,128]
-    iv = "\x00" * 8
-    prime1 = bin[384,64]
 
+    iv = "\x00" * 8
     crypto = Mcrypt.new(:des, :cbc)
     crypto.key = DES_KEY
     crypto.iv = iv
-    crypto.padding = :zeros
+    crypto.padding = false
+
+    prime1 = bin[384,64]
     enc = crypto.encrypt(prime1)
     @@private_key[:prime1] = enc
     prime2 = bin[448,64]
