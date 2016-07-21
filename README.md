@@ -4,7 +4,7 @@
 
 ## 依赖
 * mcrypt (用于[ruby-mcrypt](https://github.com/kingpong/ruby-mcrypt))
-    ```
-    # 对于ubuntu系统
-    sudo apt-get install mcrypt libmcrypt-dev
-    ```
+```
+# 安装mcrypt (ubuntu)
+sudo apt-get install mcrypt libmcrypt-dev
+```
