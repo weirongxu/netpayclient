@@ -51,18 +51,18 @@ module Netpayclient
     p = self.bin2int(private_key[:prime1])
     q = self.bin2int(private_key[:prime2])
     u = self.bin2int(private_key[:coefficient])
-    dP	= self.bin2int(private_key[:prime_exponent1])
-    dQ	= self.bin2int(private_key[:prime_exponent2])
-    c	= self.bin2int(input)
+    dP = self.bin2int(private_key[:prime_exponent1])
+    dQ = self.bin2int(private_key[:prime_exponent2])
+    c = self.bin2int(input)
     cp = c % p
     cq = c % q
     a = self.mybcpowmod(cp,dP,p)
     b = self.mybcpowmod(cq,dQ,q)
     if a > b
-        result = a - b
+      result = a - b
     else
-        result = b - a
-        result = p - result
+      result = b - a
+      result = p - result
     end
     result = result % p
     result = result * u
@@ -89,9 +89,9 @@ module Netpayclient
     key_file = IniParse.parse(File.read(key))['NetPayClient']
     hex = ""
     if not key_file['MERID'].nil?
-        ret = key_file['MERID']
-        @@private_key[:MERID] = ret
-        hex = key_file['prikeyS'][80...key_file['prikeyS'].size]
+      ret = key_file['MERID']
+      @@private_key[:MERID] = ret
+      hex = key_file['prikeyS'][80...key_file['prikeyS'].size]
     elsif not key_file['PGID'].nil?
       ret = key_file['PGID']
       @@private_key[:PGID] = ret
