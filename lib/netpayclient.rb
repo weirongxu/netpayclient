@@ -25,7 +25,7 @@ module Netpayclient
   end
 
   def self.bin2int(bindata)
-    self.bchexdec(bindata.unpack('H*'))
+    self.bchexdec(bindata.unpack('H*')[0])
   end
 
   def self.bchexdec(hexdata)
@@ -150,7 +150,7 @@ module Netpayclient
     return false if not @@private_key.key?(:PGID)
     return false if check.size != 256
     hb = self.sha1_128(plain)
-    hbhex = hb.unpack('H*').upcase
+    hbhex = hb.unpack('H*')[0].upcase
     rbhex = self.rsa_decrypt(check)
     return hbhex == rbhex ? true : false
   end
