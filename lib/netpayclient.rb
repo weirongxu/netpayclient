@@ -83,19 +83,21 @@ module Netpayclient
     self.padstr(rb).upcase
   end
 
-  def self.build_key(key)
+  def self.build_key(path: nil, config_hash: {})
     @@private_key.clear
     ret = false
-    key_file = IniParse.parse(File.read(key))['NetPayClient']
+    if path
+      config_hash = IniParse.parse(File.read(path))['NetPayClient']
+    end
     hex = ""
-    if not key_file['MERID'].nil?
-      ret = key_file['MERID']
+    if not config_hash['MERID'].nil?
+      ret = config_hash['MERID']
       @@private_key[:MERID] = ret
-      hex = key_file['prikeyS'][80...key_file['prikeyS'].size]
-    elsif not key_file['PGID'].nil?
-      ret = key_file['PGID']
+      hex = config_hash['prikeyS'][80...config_hash['prikeyS'].size]
+    elsif not config_hash['PGID'].nil?
+      ret = config_hash['PGID']
       @@private_key[:PGID] = ret
-      hex = key_file['pubkeyS'][48...key_file['pubkeyS'].size]
+      hex = config_hash['pubkeyS'][48...config_hash['pubkeyS'].size]
     else
       return ret
     end
