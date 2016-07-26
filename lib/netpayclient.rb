@@ -148,7 +148,7 @@ module Netpayclient
     return self.sign(plain)
   end
 
-  def verify(plain,check)
+  def self.verify(plain,check)
     return false if not @@private_key.key?(:PGID)
     return false if check.size != 256
     hb = self.sha1_128(plain)
@@ -157,7 +157,7 @@ module Netpayclient
     return hbhex == rbhex ? true : false
   end
 
-  def verify_trans_response(merid,ordno,amount,curyid,transdate,transtype,ordstatus,check)
+  def self.verify_trans_response(merid,ordno,amount,curyid,transdate,transtype,ordstatus,check)
     return false if (merid.size!=15)
     return false if (ordno.size!=16)
     return false if (amount.size!=12)
