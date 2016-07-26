@@ -1,5 +1,5 @@
-# coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
+# coding: utf-8
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'netpayclient/version'
 
@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{银联商户会员的ruby SDK}
   spec.description   = %q{银联商户会员的ruby SDK}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage      = "https://github.com/weirongxu/netpayclient"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = "exe"
