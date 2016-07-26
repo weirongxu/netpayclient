@@ -48,7 +48,7 @@ module Netpayclient
     num.to_bn.mod_exp(pow, mod)
   end
 
-  def self.rsa_encrypt(private_key,input)
+  def self.rsa_encrypt(private_key, input)
     p = self.bin2int(private_key[:prime1])
     q = self.bin2int(private_key[:prime2])
     u = self.bin2int(private_key[:coefficient])
@@ -57,8 +57,8 @@ module Netpayclient
     c = self.bin2int(input)
     cp = c % p
     cq = c % q
-    a = self.mybcpowmod(cp,dP,p)
-    b = self.mybcpowmod(cq,dQ,q)
+    a = self.mybcpowmod(cp, dP, p)
+    b = self.mybcpowmod(cq, dQ, q)
     if a > b
       result = a - b
     else
@@ -84,11 +84,13 @@ module Netpayclient
     self.padstr(rb).upcase
   end
 
-  def self.build_key(path: nil, config_hash: {})
+  def self.build_key(path: nil, hash: {})
     @@private_key.clear
     ret = false
     if path
       config_hash = IniParse.parse(File.read(path))['NetPayClient']
+    else
+      config_hash = hash
     end
     hex = ""
     if not config_hash['MERID'].nil?
@@ -137,7 +139,7 @@ module Netpayclient
     return self.rsa_encrypt(@@private_key, hb)
   end
 
-  def self.sign_order(merid,ordno,amount,curyid,transdate,transtype)
+  def self.sign_order(merid, ordno, amount, curyid, transdate, transtype)
     return false if (merid.size!=15)
     return false if (ordno.size!=16)
     return false if (amount.size!=12)
@@ -148,7 +150,7 @@ module Netpayclient
     return self.sign(plain)
   end
 
-  def self.verify(plain,check)
+  def self.verify(plain, check)
     return false if not @@private_key.key?(:PGID)
     return false if check.size != 256
     hb = self.sha1_128(plain)
@@ -157,7 +159,7 @@ module Netpayclient
     return hbhex == rbhex ? true : false
   end
 
-  def self.verify_trans_response(merid,ordno,amount,curyid,transdate,transtype,ordstatus,check)
+  def self.verify_trans_response(merid, ordno, amount, curyid, transdate, transtype, ordstatus, check)
     return false if (merid.size!=15)
     return false if (ordno.size!=16)
     return false if (amount.size!=12)
