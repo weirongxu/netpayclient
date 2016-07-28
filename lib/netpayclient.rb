@@ -1,15 +1,31 @@
 require "netpayclient/version"
 
-module Netpayclient
-  require 'digest/sha1'
-  require 'mcrypt'
-  require 'iniparse'
+class Netpayclient
   require 'openssl'
 
   DES_KEY = 'SCUBEPGW'
   HASH_PAD = '0001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff003021300906052b0e03021a05000414'
 
-  @@private_key = {}
+  module Crypto
+    require 'mcrypt'
+    def self.crypto
+      if defined?(@@crypto).nil?
+        @@crypto = Mcrypt.new(:des, :cbc)
+        @@crypto.key = DES_KEY
+        @@crypto.iv = "\x00" * 8
+        @@crypto.padding = false
+      end
+      @@crypto
+    end
+
+    def self.decrypt(str)
+      if str.blank?
+        "\xEE\xB3\x16\x86\xAB\x84G\x90"
+      else
+        self.crypto.decrypt(str)
+      end
+    end
+  end
 
   def self.hex2bin(hexdata)
     [hexdata].pack "H*"
@@ -38,6 +54,7 @@ module Netpayclient
   end
 
   def self.sha1_128(string)
+    require 'digest/sha1'
     hash = Digest::SHA1.hexdigest(string)
     sha_bin = self.hex2bin(hash)
     sha_pad = self.hex2bin(HASH_PAD)
@@ -75,18 +92,13 @@ module Netpayclient
     ret.size == 256 ? ret : false
   end
 
-  def self.rsa_decrypt(input)
-    check = self.bchexdec(input)
-    modulus = self.bin2int(@@private_key["modulus"])
-    exponent = self.bchexdec("010001")
-    result = self.mybcpowmod(check,exponent,modulus)
-    rb = self.bcdechex(result)
-    self.padstr(rb).upcase
+  def self.build_key(path: nil, hash: {})
+    self.new(path: path, hash: hash)
   end
 
-  def self.build_key(path: nil, hash: {})
-    @@private_key.clear
-    ret = false
+  def initialize(path: nil, hash: {})
+    require 'iniparse'
+    @private_key = {}
     if path
       config_hash = IniParse.parse(File.read(path))['NetPayClient']
     else
@@ -95,51 +107,53 @@ module Netpayclient
     hex = ""
     if not config_hash['MERID'].nil?
       ret = config_hash['MERID']
-      @@private_key[:MERID] = ret
+      @private_key[:MERID] = ret
       hex = config_hash['prikeyS'][80...config_hash['prikeyS'].size]
     elsif not config_hash['PGID'].nil?
       ret = config_hash['PGID']
-      @@private_key[:PGID] = ret
+      @private_key[:PGID] = ret
       hex = config_hash['pubkeyS'][48...config_hash['pubkeyS'].size]
     else
-      return ret
+      raise 'config error'
     end
-    bin = self.hex2bin(hex)
-    @@private_key[:modulus] = bin[0,128]
-
-    iv = "\x00" * 8
-    crypto = Mcrypt.new(:des, :cbc)
-    crypto.key = DES_KEY
-    crypto.iv = iv
-    crypto.padding = false
+    bin = self.class.hex2bin(hex)
+    @private_key[:modulus] = bin[0,128]
 
     prime1 = bin[384,64]
-    enc = crypto.decrypt(prime1)
-    @@private_key[:prime1] = enc
+    enc = Crypto.decrypt(prime1)
+    @private_key[:prime1] = enc
     prime2 = bin[448,64]
-    enc = crypto.decrypt(prime2)
-    @@private_key[:prime2] = enc
+    enc = Crypto.decrypt(prime2)
+    @private_key[:prime2] = enc
     prime_exponent1 = bin[512,64]
-    enc = crypto.decrypt(prime_exponent1)
-    @@private_key[:prime_exponent1] = enc
+    enc = Crypto.decrypt(prime_exponent1)
+    @private_key[:prime_exponent1] = enc
     prime_exponent2 = bin[576,64]
-    enc = crypto.decrypt(prime_exponent2)
-    @@private_key[:prime_exponent2] = enc
+    enc = Crypto.decrypt(prime_exponent2)
+    @private_key[:prime_exponent2] = enc
     coefficient = bin[640,64]
-    enc = crypto.decrypt(coefficient)
-    @@private_key[:coefficient] = enc
-    return ret
+    enc = Crypto.decrypt(coefficient)
+    @private_key[:coefficient] = enc
   end
 
-  def self.sign(msg)
-    if not @@private_key.key?(:MERID)
+  def rsa_decrypt(input)
+    check = self.class.bchexdec(input)
+    modulus = self.class.bin2int(@private_key[:modulus])
+    exponent = self.class.bchexdec("010001")
+    result = self.class.mybcpowmod(check, exponent, modulus)
+    rb = self.class.bcdechex(result)
+    self.class.padstr(rb).upcase
+  end
+
+  def sign(msg)
+    if not @private_key.key?(:MERID)
       return false
     end
-    hb = self.sha1_128(msg)
-    return self.rsa_encrypt(@@private_key, hb)
+    hb = self.class.sha1_128(msg)
+    return self.class.rsa_encrypt(@private_key, hb)
   end
 
-  def self.sign_order(merid, ordno, amount, curyid, transdate, transtype)
+  def sign_order(merid, ordno, amount, curyid, transdate, transtype)
     return false if (merid.size!=15)
     return false if (ordno.size!=16)
     return false if (amount.size!=12)
@@ -147,19 +161,19 @@ module Netpayclient
     return false if (transdate.size!=8)
     return false if (transtype.size!=4)
     plain = merid + ordno + amount + curyid + transdate + transtype
-    return self.sign(plain)
+    return sign(plain)
   end
 
-  def self.verify(plain, check)
-    return false if not @@private_key.key?(:PGID)
+  def verify(plain, check)
+    return false if not @private_key.key?(:PGID)
     return false if check.size != 256
-    hb = self.sha1_128(plain)
+    hb = self.class.sha1_128(plain)
     hbhex = hb.unpack('H*')[0].upcase
-    rbhex = self.rsa_decrypt(check)
+    rbhex = rsa_decrypt(check)
     return hbhex == rbhex ? true : false
   end
 
-  def self.verify_trans_response(merid, ordno, amount, curyid, transdate, transtype, ordstatus, check)
+  def verify_trans_response(merid, ordno, amount, curyid, transdate, transtype, ordstatus, check)
     return false if (merid.size!=15)
     return false if (ordno.size!=16)
     return false if (amount.size!=12)
@@ -169,6 +183,6 @@ module Netpayclient
     return false if (ordstatus.size!=4)
     return false if (check.size!=256)
     plain = merid + ordno + amount + curyid + transdate + transtype + ordstatus
-    return self.verify(plain, check)
+    return verify(plain, check)
   end
 end
