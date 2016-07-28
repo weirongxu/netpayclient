@@ -38,7 +38,7 @@ netpay.sign_order(merid, ordno, amount, curyid, transdate, transtype)
 netpay.verify(plain, checkvalue)
 ```
 
-### 应答数据的签名包装 verify_trans_response
+### 应答数据的签名验证包装 verify_trans_response
 ```ruby
 netpay.verify_trans_response(merid, ordno, amount, curyid, transdate, transtype, ordstatus, check)
 ```
