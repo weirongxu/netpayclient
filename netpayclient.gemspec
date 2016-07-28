@@ -8,6 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Netpayclient::VERSION
   spec.authors       = ["Weirong Xu"]
   spec.email         = ["weirongxu.raidou@gmail.com"]
+  spec.licenses      = ['MIT']
 
   spec.summary       = %q{银联商户会员的ruby SDK}
   spec.description   = %q{银联商户会员的ruby SDK}
