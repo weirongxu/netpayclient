@@ -2,7 +2,12 @@
 
 银联商户会员 ruby
 
-## 依赖
+## 安装
+```ruby
+gem 'netpayclient'
+```
+
+## 系统依赖
 * mcrypt (用于[ruby-mcrypt](https://github.com/kingpong/ruby-mcrypt))
 ```
 # 安装mcrypt (ubuntu)
