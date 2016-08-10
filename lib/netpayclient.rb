@@ -19,7 +19,7 @@ module Netpayclient
     end
 
     def self.decrypt(str)
-      if str.blank?
+      if str.empty?
         "\xEE\xB3\x16\x86\xAB\x84G\x90"
       else
         self.crypto.decrypt(str)
